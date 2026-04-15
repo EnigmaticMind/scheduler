@@ -1,4 +1,4 @@
-package appointsments
+package appointments
 
 // Data layer, should exclusively contain data access logic
 import (

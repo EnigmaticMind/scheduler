@@ -1,4 +1,4 @@
-package appointsments
+package appointments
 
 // This is the domain, business logic layer to handle calculations.  Allowing reuse of business logic.
 import (
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Using `AppointmentDL` for now but an appointsments definition in the domain layer would protect from DB schema changes
+// Using `AppointmentDL` for now but an appointments definition in the domain layer would protect from DB schema changes
 type Appointments struct{}
 
 func overlapsAny(bookings []AppointmentDL, start, end time.Time) bool {
@@ -75,7 +75,7 @@ func CreateAppointment(ctx context.Context, dao AppointmentDAO, userID, trainerI
 	local := startsAt.In(loc)
 	wd := local.Weekday()
 	if wd == time.Saturday || wd == time.Sunday {
-		return AppointmentDL{}, errors.New("business hours are M-F 8am-5pm Pacific Time, appointsment must match that")
+		return AppointmentDL{}, errors.New("business hours are M-F 8am-5pm Pacific Time, appointment must match that")
 	}
 	m := local.Minute()
 	if m != 0 && m != 30 || local.Second() != 0 || local.Nanosecond() != 0 {
@@ -83,11 +83,12 @@ func CreateAppointment(ctx context.Context, dao AppointmentDAO, userID, trainerI
 	}
 	mins := local.Hour()*60 + local.Minute()
 	if mins < 8*60 || mins > 16*60+30 {
-		return AppointmentDL{}, errors.New("business hours are M-F 8am-5pm Pacific Time, appointsment must match that")
+		return AppointmentDL{}, errors.New("business hours are M-F 8am-5pm Pacific Time, appointment must match that")
 	}
 	end := startsAt.Add(30 * time.Minute)
 	startUTC := startsAt.UTC()
 	endUTC := end.UTC()
+	// There's a gap here from get apts and checking overlap where you can double book, SQL constraint would fix that.
 	booked, err := dao.GetAppointments(ctx, trainerID)
 	if err != nil {
 		return AppointmentDL{}, err

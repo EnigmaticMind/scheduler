@@ -4,7 +4,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"scheduler/appointsments"
+	"scheduler/appointments"
 	"scheduler/helpers/jsonwriter"
 	"strconv"
 	"time"
@@ -34,8 +34,8 @@ type createAppointmentReq struct {
 }
 
 // Map data object to response types so they remain uncoupled
-// Should decouple `AppointmentDL` from the handlers, creating a domain specific definition of appointsments
-func listAppointsmentsToRes(apts []appointsments.AppointmentDL) []potentialAppointmentRes {
+// Should decouple `AppointmentDL` from the handlers, creating a domain specific definition of appointments
+func listAppointmentsToRes(apts []appointments.AppointmentDL) []potentialAppointmentRes {
 	out := make([]potentialAppointmentRes, 0, len(apts))
 	for _, a := range apts {
 		out = append(out, potentialAppointmentRes{
@@ -47,7 +47,7 @@ func listAppointsmentsToRes(apts []appointsments.AppointmentDL) []potentialAppoi
 	return out
 }
 
-func scheduledAppointmentsToRes(apts []appointsments.AppointmentDL) []scheduledAppointmentRes {
+func scheduledAppointmentsToRes(apts []appointments.AppointmentDL) []scheduledAppointmentRes {
 	out := make([]scheduledAppointmentRes, 0, len(apts))
 	for _, a := range apts {
 		out = append(out, scheduledAppointmentRes{
@@ -62,7 +62,7 @@ func scheduledAppointmentsToRes(apts []appointsments.AppointmentDL) []scheduledA
 }
 
 // ListAppointments
-func ListAppointments(aptDAO appointsments.AppointmentDAO) httprouter.Handle {
+func ListAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		q := r.URL.Query()
 		trainerID, err := strconv.ParseInt(q.Get("trainer_id"), 10, 64)
@@ -81,18 +81,18 @@ func ListAppointments(aptDAO appointsments.AppointmentDAO) httprouter.Handle {
 			return
 		}
 
-		apts, err := appointsments.AvailableAppointments(r.Context(), aptDAO, trainerID, startsAt, endsAt)
+		apts, err := appointments.AvailableAppointments(r.Context(), aptDAO, trainerID, startsAt, endsAt)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusInternalServerError, "failed to list appointments", err)
 			return
 		}
 
-		jsonwriter.WriteJSONArray(w, http.StatusOK, listAppointsmentsToRes(apts))
+		jsonwriter.WriteJSONArray(w, http.StatusOK, listAppointmentsToRes(apts))
 	}
 }
 
 // CreateAppointments
-func CreateAppointments(aptDAO appointsments.AppointmentDAO) httprouter.Handle {
+func CreateAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var body createAppointmentReq
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -110,18 +110,18 @@ func CreateAppointments(aptDAO appointsments.AppointmentDAO) httprouter.Handle {
 			return
 		}
 
-		created, err := appointsments.CreateAppointment(r.Context(), aptDAO, body.UserID, body.TrainerID, startsAt, endsAt)
+		created, err := appointments.CreateAppointment(r.Context(), aptDAO, body.UserID, body.TrainerID, startsAt, endsAt)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusInternalServerError, err.Error(), err)
 			return
 		}
 
-		jsonwriter.WriteJSONArray(w, http.StatusCreated, scheduledAppointmentsToRes([]appointsments.AppointmentDL{created}))
+		jsonwriter.WriteJSONArray(w, http.StatusCreated, scheduledAppointmentsToRes([]appointments.AppointmentDL{created}))
 	}
 }
 
 // ListScheduledAppointments
-func ListScheduledAppointments(aptDAO appointsments.AppointmentDAO) httprouter.Handle {
+func ListScheduledAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		q := r.URL.Query()
 		trainerID, err := strconv.ParseInt(q.Get("trainer_id"), 10, 64)

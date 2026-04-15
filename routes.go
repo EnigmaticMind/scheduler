@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"scheduler/appointsments"
+	"scheduler/appointments"
 	"scheduler/handlers"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -10,7 +10,7 @@ import (
 )
 
 func newRouter(pool *pgxpool.Pool) http.Handler {
-	aptDAO := appointsments.NewDAO(pool)
+	aptDAO := appointments.NewDAO(pool)
 
 	r := httprouter.New()
 	r.GET("/appointments", handlers.ListAppointments(aptDAO))

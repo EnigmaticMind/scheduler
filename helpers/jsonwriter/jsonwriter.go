@@ -16,12 +16,14 @@ type errorEnvelope struct {
 	Error string `json:"error"`
 }
 
+// WriteJSONArray - Normalize json responses
 func WriteJSONArray[T any](w http.ResponseWriter, status int, items []T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(listEnvelope[T]{Data: items})
 }
 
+// WriteJSONErr - Normalize json errors
 func WriteJSONErr(w http.ResponseWriter, status int, msg string, err error) {
 	fmt.Println(err)
 	w.Header().Set("Content-Type", "application/json")
