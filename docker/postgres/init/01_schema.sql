@@ -6,3 +6,5 @@ CREATE TABLE appointments (
     started_at TIMESTAMPTZ NOT NULL,
     ended_at TIMESTAMPTZ NOT NULL
 );
+
+-- TODO: constraints should be added for start / end overlaps to take care of race conditions

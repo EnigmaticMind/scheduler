@@ -1,6 +1,8 @@
 # Scheduler API
 
-Small Go API for managing trainer appointments.
+The request specifically asked for "seperation of concerns". So I isolated domain, data, and handler layers. One could argue for a project of this size it adds unneccessary boilerplate BUT given the original concern it helps isolate things. Changes in the request/response structs don't demand changes to the underlying data structs.
+
+Other specific callouts exist in comments of the code where appropriate.
 
 ## Prerequisites
 
@@ -10,35 +12,7 @@ Small Go API for managing trainer appointments.
 
 ## Run Locally
 
-### 1) Start database
-
-```bash
-make db
-```
-
-This starts Postgres on `localhost:5432` with defaults:
-
-- user: `scheduler`
-- password: `scheduler`
-- database: `scheduler`
-
-Schema and seed data are loaded from `docker/postgres/init`.
-
-### 2) Start API
-
-```bash
-make run
-```
-
-API starts on `http://localhost:8080`.
-
-Health check:
-
-```bash
-curl http://localhost:8080/health
-```
-
-## Alternative: Run Full Stack via Docker Compose
+Run Full Stack via Docker Compose
 
 ```bash
 make up
@@ -58,14 +32,11 @@ Follow logs:
 make logs
 ```
 
-## Environment Variables
+## Postman
 
-- `PORT` (default: `8080`)
-- `DATABASE_URL` (default: `postgres://scheduler:scheduler@localhost:5432/scheduler?sslmode=disable`)
-- `POSTGRES_USER` (default: `scheduler`) - used by Docker Compose
-- `POSTGRES_PASSWORD` (default: `scheduler`) - used by Docker Compose
-- `POSTGRES_DB` (default: `scheduler`) - used by Docker Compose
-- `POSTGRES_PORT` (default: `5432`) - used by Docker Compose
+Import `scheduler.postman_collection.json` into Postman.
+
+It includes ready-to-run requests for all endpoints and uses collection variables for inputs.
 
 ## API Endpoints
 
@@ -89,9 +60,3 @@ Error responses are wrapped as:
   "error": "message"
 }
 ```
-
-## Postman
-
-Import `scheduler.postman_collection.json` into Postman.
-
-It includes ready-to-run requests for all endpoints and uses collection variables for inputs.

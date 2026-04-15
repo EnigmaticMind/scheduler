@@ -26,6 +26,8 @@ type BookingAppointments struct {
 	Start     time.Time `json:"-" db:"-"`
 }
 
+// This should probably accept GetScheduledAppointsments output instead,
+// This will prevent downstream impact a bit
 func overlapsAny(bookings []AppointmentDL, start, end time.Time) bool {
 	// Not optimized due to time
 	// Due to assumption of sorting you can bail earlier or otherwise optimize this
