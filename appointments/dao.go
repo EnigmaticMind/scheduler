@@ -8,18 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// AppointmentDL
+// AppointmentDL - This is a reflection of how our data is represented in the DB
 type AppointmentDL struct {
-	ID        int64     `json:"-" db:"id"`
-	UserID    int64     `json:"-" db:"user_id"`
-	TrainerID int64     `json:"-" db:"trainer_id"`
+	ID        int       `json:"-" db:"id"`
+	UserID    int       `json:"-" db:"user_id"`
+	TrainerID int       `json:"-" db:"trainer_id"`
 	End       time.Time `json:"-" db:"ended_at"`
 	Start     time.Time `json:"-" db:"started_at"`
 }
 
 // AppointmentDAO
 type AppointmentDAO interface {
-	GetAppointments(ctx context.Context, trainerID int64) ([]AppointmentDL, error)
+	GetAppointments(ctx context.Context, trainerID int) ([]AppointmentDL, error)
 	CreateAppointment(ctx context.Context, apt AppointmentDL) (AppointmentDL, error)
 }
 
@@ -34,7 +34,7 @@ type AppointmentDAOImpl struct {
 }
 
 // GetAppointments
-func (d *AppointmentDAOImpl) GetAppointments(ctx context.Context, trainerID int64) ([]AppointmentDL, error) {
+func (d *AppointmentDAOImpl) GetAppointments(ctx context.Context, trainerID int) ([]AppointmentDL, error) {
 	q := `
 		SELECT id, user_id, trainer_id, started_at, ended_at
 		FROM appointments

@@ -15,11 +15,11 @@ import (
 )
 
 type stubAppointmentDAO struct {
-	getAppointmentsFn   func(ctx context.Context, trainerID int64) ([]appointments.AppointmentDL, error)
+	getAppointmentsFn   func(ctx context.Context, trainerID int) ([]appointments.AppointmentDL, error)
 	createAppointmentFn func(ctx context.Context, apt appointments.AppointmentDL) (appointments.AppointmentDL, error)
 }
 
-func (s *stubAppointmentDAO) GetAppointments(ctx context.Context, trainerID int64) ([]appointments.AppointmentDL, error) {
+func (s *stubAppointmentDAO) GetAppointments(ctx context.Context, trainerID int) ([]appointments.AppointmentDL, error) {
 	if s.getAppointmentsFn == nil {
 		return nil, nil
 	}
@@ -81,7 +81,7 @@ func TestListAppointments(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/appointments?trainer_id=1&starts_at=2026-04-13T08:00:00-07:00&ends_at=2026-04-13T09:00:00-07:00", nil)
 		rr := httptest.NewRecorder()
 		dao := &stubAppointmentDAO{
-			getAppointmentsFn: func(context.Context, int64) ([]appointments.AppointmentDL, error) {
+			getAppointmentsFn: func(context.Context, int) ([]appointments.AppointmentDL, error) {
 				return nil, nil
 			},
 		}
@@ -100,7 +100,7 @@ func TestListAppointments(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/appointments?trainer_id=1&starts_at=2026-04-13T08:00:00-07:00&ends_at=2026-04-13T09:00:00-07:00", nil)
 		rr := httptest.NewRecorder()
 		dao := &stubAppointmentDAO{
-			getAppointmentsFn: func(context.Context, int64) ([]appointments.AppointmentDL, error) {
+			getAppointmentsFn: func(context.Context, int) ([]appointments.AppointmentDL, error) {
 				return nil, errors.New("dao failed")
 			},
 		}
@@ -152,7 +152,7 @@ func TestCreateAppointments(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/appointments", strings.NewReader(`{"trainer_id":1,"user_id":2,"starts_at":"2026-04-13T09:00:00-07:00","ends_at":"2026-04-13T09:30:00-07:00"}`))
 		rr := httptest.NewRecorder()
 		dao := &stubAppointmentDAO{
-			getAppointmentsFn: func(context.Context, int64) ([]appointments.AppointmentDL, error) {
+			getAppointmentsFn: func(context.Context, int) ([]appointments.AppointmentDL, error) {
 				return nil, nil
 			},
 			createAppointmentFn: func(_ context.Context, apt appointments.AppointmentDL) (appointments.AppointmentDL, error) {
@@ -214,7 +214,7 @@ func TestListScheduledAppointments(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/appointments/schedules?trainer_id=1", nil)
 		rr := httptest.NewRecorder()
 		dao := &stubAppointmentDAO{
-			getAppointmentsFn: func(context.Context, int64) ([]appointments.AppointmentDL, error) {
+			getAppointmentsFn: func(context.Context, int) ([]appointments.AppointmentDL, error) {
 				return []appointments.AppointmentDL{
 					{ID: 1, UserID: 2, TrainerID: 1, Start: time.Now().UTC(), End: time.Now().UTC().Add(30 * time.Minute)},
 				}, nil
@@ -235,7 +235,7 @@ func TestListScheduledAppointments(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/appointments/schedules?trainer_id=1", nil)
 		rr := httptest.NewRecorder()
 		dao := &stubAppointmentDAO{
-			getAppointmentsFn: func(context.Context, int64) ([]appointments.AppointmentDL, error) {
+			getAppointmentsFn: func(context.Context, int) ([]appointments.AppointmentDL, error) {
 				return nil, errors.New("read failed")
 			},
 		}

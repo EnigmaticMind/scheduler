@@ -13,29 +13,29 @@ import (
 )
 
 type potentialAppointmentRes struct {
-	TrainerID int64     `json:"trainer_id"`
+	TrainerID int       `json:"trainer_id"`
 	Start     time.Time `json:"started_at"`
 	End       time.Time `json:"ended_at"`
 }
 
 type scheduledAppointmentRes struct {
-	ID        int64     `json:"id"`
-	UserID    int64     `json:"user_id"`
-	TrainerID int64     `json:"trainer_id"`
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	TrainerID int       `json:"trainer_id"`
 	Start     time.Time `json:"started_at"`
 	End       time.Time `json:"ended_at"`
 }
 
 type createAppointmentReq struct {
-	TrainerID int64  `json:"trainer_id"`
-	UserID    int64  `json:"user_id"`
+	TrainerID int    `json:"trainer_id"`
+	UserID    int    `json:"user_id"`
 	EndsAt    string `json:"ends_at"`
 	StartsAt  string `json:"starts_at"`
 }
 
 // Map data object to response types so they remain uncoupled
 // Should decouple `AppointmentDL` from the handlers, creating a domain specific definition of appointments
-func listAppointmentsToRes(apts []appointments.AppointmentDL) []potentialAppointmentRes {
+func mapListAppointmentsToRes(apts []appointments.BookingAppointments) []potentialAppointmentRes {
 	out := make([]potentialAppointmentRes, 0, len(apts))
 	for _, a := range apts {
 		out = append(out, potentialAppointmentRes{
@@ -47,7 +47,7 @@ func listAppointmentsToRes(apts []appointments.AppointmentDL) []potentialAppoint
 	return out
 }
 
-func scheduledAppointmentsToRes(apts []appointments.AppointmentDL) []scheduledAppointmentRes {
+func mapScheduledAppointmentsToRes(apts []appointments.ScheduledAppointment) []scheduledAppointmentRes {
 	out := make([]scheduledAppointmentRes, 0, len(apts))
 	for _, a := range apts {
 		out = append(out, scheduledAppointmentRes{
@@ -65,11 +65,12 @@ func scheduledAppointmentsToRes(apts []appointments.AppointmentDL) []scheduledAp
 func ListAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		q := r.URL.Query()
-		trainerID, err := strconv.ParseInt(q.Get("trainer_id"), 10, 64)
+		trainerIDInt64, err := strconv.ParseInt(q.Get("trainer_id"), 10, 32)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusBadRequest, "bad trainer_id", err)
 			return
 		}
+		trainerID := int(trainerIDInt64)
 		startsAt, err := time.Parse(time.RFC3339, q.Get("starts_at"))
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusBadRequest, "bad starts_at (use RFC3339)", err)
@@ -87,7 +88,7 @@ func ListAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 			return
 		}
 
-		jsonwriter.WriteJSONArray(w, http.StatusOK, listAppointmentsToRes(apts))
+		jsonwriter.WriteJSONArray(w, http.StatusOK, mapListAppointmentsToRes(apts))
 	}
 }
 
@@ -104,6 +105,7 @@ func CreateAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 			jsonwriter.WriteJSONErr(w, http.StatusBadRequest, "bad starts_at (use RFC3339)", err)
 			return
 		}
+		// We don't actually need an ends at here, all appointsments are 30 minutes long and adds later complexity
 		endsAt, err := time.Parse(time.RFC3339, body.EndsAt)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusBadRequest, "bad ends_at (use RFC3339)", err)
@@ -116,7 +118,7 @@ func CreateAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 			return
 		}
 
-		jsonwriter.WriteJSONArray(w, http.StatusCreated, scheduledAppointmentsToRes([]appointments.AppointmentDL{created}))
+		jsonwriter.WriteJSONArray(w, http.StatusCreated, mapScheduledAppointmentsToRes([]appointments.ScheduledAppointment{created}))
 	}
 }
 
@@ -124,18 +126,30 @@ func CreateAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 func ListScheduledAppointments(aptDAO appointments.AppointmentDAO) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		q := r.URL.Query()
-		trainerID, err := strconv.ParseInt(q.Get("trainer_id"), 10, 64)
+		trainerIDInt64, err := strconv.ParseInt(q.Get("trainer_id"), 10, 32)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusBadRequest, "bad trainer_id", err)
 			return
 		}
+		trainerID := int(trainerIDInt64)
 
-		apts, err := aptDAO.GetAppointments(r.Context(), trainerID)
+		apts, err := appointments.GetScheduledAppointsments(r.Context(), aptDAO, trainerID)
 		if err != nil {
 			jsonwriter.WriteJSONErr(w, http.StatusInternalServerError, "failed to list appointments", err)
 			return
 		}
 
-		jsonwriter.WriteJSONArray(w, http.StatusOK, scheduledAppointmentsToRes(apts))
+		out := make([]scheduledAppointmentRes, 0, len(apts))
+		for _, a := range apts {
+			out = append(out, scheduledAppointmentRes{
+				ID:        a.ID,
+				UserID:    a.UserID,
+				TrainerID: a.TrainerID,
+				Start:     a.Start,
+				End:       a.End,
+			})
+		}
+
+		jsonwriter.WriteJSONArray(w, http.StatusOK, mapScheduledAppointmentsToRes(apts))
 	}
 }
